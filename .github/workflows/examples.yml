@@ -1,5 +1,8 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
 name: "examples"
 on: [push]
+
+permissions: {}
 
 jobs:
   # make sure the action works on a clean machines without building
@@ -7,8 +10,13 @@ jobs:
   ## Basic
   test_basic_success:
     runs-on: ubuntu-latest
+    permissions:
+      checks: write
+      contents: read
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
       - uses: ./
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -17,8 +25,13 @@ jobs:
 
   test_basic_success_with_output:
     runs-on: ubuntu-latest
+    permissions:
+      checks: write
+      contents: read
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
       - uses: ./
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -29,8 +42,13 @@ jobs:
 
   test_basic_failure:
     runs-on: ubuntu-latest
+    permissions:
+      checks: write
+      contents: read
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
       - uses: ./
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -40,8 +58,13 @@ jobs:
   # Other codes
   test_basic_neutral:
     runs-on: ubuntu-latest
+    permissions:
+      checks: write
+      contents: read
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
       - uses: ./
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -50,8 +73,13 @@ jobs:
 
   test_basic_cancelled:
     runs-on: ubuntu-latest
+    permissions:
+      checks: write
+      contents: read
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
       - uses: ./
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -60,8 +88,13 @@ jobs:
 
   test_basic_timed_out:
     runs-on: ubuntu-latest
+    permissions:
+      checks: write
+      contents: read
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
       - uses: ./
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -70,8 +103,13 @@ jobs:
 
   test_basic_action_required:
     runs-on: ubuntu-latest
+    permissions:
+      checks: write
+      contents: read
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
       - uses: ./
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -82,8 +120,13 @@ jobs:
 
   test_basic_skipped:
     runs-on: ubuntu-latest
+    permissions:
+      checks: write
+      contents: read
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
       - uses: ./
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -93,8 +136,13 @@ jobs:
   # With details
   test_with_details:
     runs-on: ubuntu-latest
+    permissions:
+      checks: write
+      contents: read
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
       - uses: ./
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -106,8 +154,13 @@ jobs:
   ## With annotations
   test_with_annotations:
     runs-on: ubuntu-latest
+    permissions:
+      checks: write
+      contents: read
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
       - uses: ./
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -121,11 +174,16 @@ jobs:
 
   test_with_annotations_from_run:
     runs-on: ubuntu-latest
+    permissions:
+      checks: write
+      contents: read
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
       - id: annotations
         run: |
-          echo "value=$ANNOTATIONS" >> $GITHUB_OUTPUT
+          echo "value=$ANNOTATIONS" >> "$GITHUB_OUTPUT"
         env:
           ANNOTATIONS: |
             [{"path":"README.md","start_line":1,"end_line":2,"message":"Check your spelling for 'banaas'.","annotation_level":"warning"}]
@@ -142,8 +200,13 @@ jobs:
   ## With images
   test_with_images:
     runs-on: ubuntu-latest
+    permissions:
+      checks: write
+      contents: read
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
       - uses: ./
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -157,11 +220,16 @@ jobs:
 
   test_with_images_from_run:
     runs-on: ubuntu-latest
+    permissions:
+      checks: write
+      contents: read
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
       - id: images
         run: |
-          echo "value=$IMAGES" >> $GITHUB_OUTPUT
+          echo "value=$IMAGES" >> "$GITHUB_OUTPUT"
         env:
           IMAGES: |
             [{"alt":"Cool pic","image_url":"https://via.placeholder.com/150","caption":"Cool description"}]
@@ -178,8 +246,13 @@ jobs:
   ## With actions
   test_with_actions:
     runs-on: ubuntu-latest
+    permissions:
+      checks: write
+      contents: read
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
       - uses: ./
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -192,11 +265,16 @@ jobs:
 
   test_with_actions_from_run:
     runs-on: ubuntu-latest
+    permissions:
+      checks: write
+      contents: read
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
       - id: actions
         run: |
-          echo "value=$ACTIONS" >> $GITHUB_OUTPUT
+          echo "value=$ACTIONS" >> "$GITHUB_OUTPUT"
         env:
           ACTIONS: |
             [{"label":"Click Me","description":"Click me to get free RAM","identifier":"sent_to_webhook"}]
@@ -214,8 +292,13 @@ jobs:
   ## With init
   test_with_init:
     runs-on: ubuntu-latest
+    permissions:
+      checks: write
+      contents: read
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
       - uses: ./
         id: init
         with:
@@ -234,8 +317,13 @@ jobs:
 
   test_with_init_implicit:
     runs-on: ubuntu-latest
+    permissions:
+      checks: write
+      contents: read
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
       - uses: ./
         id: init
         with:
@@ -253,8 +341,13 @@ jobs:
   test_based_job_success:
     name: "Test Job Success (passes)"
     runs-on: ubuntu-latest
+    permissions:
+      checks: write
+      contents: read
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
       - uses: ./
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -264,9 +357,15 @@ jobs:
   test_based_job_failure:
     name: "Test Job Failure (fails)"
     runs-on: ubuntu-latest
+    permissions:
+      checks: write
+      contents: read
     steps:
-      - uses: actions/checkout@v6
-      - run: false
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - run: |
+          false
       - uses: ./
         if: always()
         with:

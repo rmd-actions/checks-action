@@ -1,14 +1,16 @@
-import * as core from "@actions/core";
+/** biome-ignore-all lint/style/useNamingConvention: GH Names */
+import { info } from "@actions/core";
 import type { GitHub } from "@actions/github/lib/utils";
-import type * as GH from "./namespaces/GitHub";
-import * as Inputs from "./namespaces/Inputs";
+import type * as GH from "./namespaces/GitHub.ts";
+import type { Args } from "./namespaces/inputs.ts";
+import { Conclusion, Status } from "./namespaces/inputs.ts";
 
 type Ownership = {
 	owner: string;
 	repo: string;
 };
 
-const unpackInputs = (title: string, inputs: Inputs.Args): GH.Inputs => {
+const unpackInputs = (title: string, inputs: Args): GH.Inputs => {
 	let output: GH.Inputs["output"];
 	if (inputs.output) {
 		output = {
@@ -20,58 +22,52 @@ const unpackInputs = (title: string, inputs: Inputs.Args): GH.Inputs => {
 		};
 	}
 
-	let details_url: string | undefined;
+	let detailsUrl: string | undefined;
 
-	if (
-		inputs.conclusion === Inputs.Conclusion.ActionRequired ||
-		inputs.actions
-	) {
+	if (inputs.conclusion === Conclusion.ActionRequired || inputs.actions) {
 		if (inputs.detailsURL) {
-			const reasonList = [];
-			if (inputs.conclusion === Inputs.Conclusion.ActionRequired) {
+			const reasonList: string[] = [];
+			if (inputs.conclusion === Conclusion.ActionRequired) {
 				reasonList.push(`'conclusion' is 'action_required'`);
 			}
 			if (inputs.actions) {
 				reasonList.push(`'actions' was provided`);
 			}
 			const reasons = reasonList.join(" and ");
-			core.info(
+			info(
 				`'details_url' was ignored in favor of 'action_url' because ${reasons} (see documentation for details)`,
 			);
 		}
-		details_url = inputs.actionURL;
+		detailsUrl = inputs.actionURL;
 	} else if (inputs.detailsURL) {
-		details_url = inputs.detailsURL;
+		detailsUrl = inputs.detailsURL;
 	}
 
 	return {
 		actions: inputs.actions,
-		completed_at:
-			inputs.status === Inputs.Status.Completed ? formatDate() : undefined,
+		completed_at: inputs.status === Status.Completed ? formatDate() : undefined,
 		conclusion: inputs.conclusion
 			? (inputs.conclusion.toString() as GH.Inputs["conclusion"])
 			: undefined,
-		details_url,
+		details_url: detailsUrl,
 		output,
 		status: inputs.status.toString() as GH.Inputs["status"],
 	};
 };
 
-const formatDate = (): string => {
-	return new Date().toISOString();
-};
+const formatDate = (): string => new Date().toISOString();
 
 export const createRun = async (
 	octokit: InstanceType<typeof GitHub>,
 	name: string,
 	sha: string,
 	ownership: Ownership,
-	inputs: Inputs.Args,
+	inputs: Args,
 ): Promise<number> => {
 	const { data } = await octokit.rest.checks.create({
 		...ownership,
 		head_sha: sha,
-		name: name,
+		name,
 		started_at: formatDate(),
 		...unpackInputs(name, inputs),
 	});
@@ -82,7 +78,7 @@ export const updateRun = async (
 	octokit: InstanceType<typeof GitHub>,
 	id: number,
 	ownership: Ownership,
-	inputs: Inputs.Args,
+	inputs: Args,
 ): Promise<void> => {
 	const previous = await octokit.rest.checks.get({
 		...ownership,

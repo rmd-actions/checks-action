@@ -1,6 +1,7 @@
-import type { Actions, Annotations, Images } from "./GitHub";
+/** biome-ignore-all lint/style/useNamingConvention: GH Names */
+import type { Actions, Annotations, Images } from "./GitHub.ts";
 
-interface ArgsBase {
+type ArgsBase = {
 	actions?: Actions;
 
 	actionURL?: string;
@@ -15,22 +16,22 @@ interface ArgsBase {
 	sha?: string;
 	status: Status;
 	token: string;
-}
+};
 
-export interface ArgsCreate extends ArgsBase {
+export type ArgsCreate = ArgsBase & {
 	name: string;
-}
+};
 
-export interface ArgsUpdate extends ArgsBase {
+export type ArgsUpdate = ArgsBase & {
 	checkID: number;
-}
+};
 
 export type Args = ArgsCreate | ArgsUpdate;
 
 export type Output = {
-	title?: string;
 	summary: string;
 	text_description?: string;
+	title?: string;
 };
 
 export enum Conclusion {

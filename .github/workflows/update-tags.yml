@@ -1,0 +1,15 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+name: Update aggregate tags
+
+on:
+  push:
+    tags:
+      - "v*.*"
+
+permissions: {}
+
+jobs:
+  retag:
+    permissions:
+      contents: write
+    uses: LouisBrunner/.github/.github/workflows/update-tags.yml@main

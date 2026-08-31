@@ -1,4 +1,5 @@
 {
+	"$schema": "https://json.schemastore.org/package.json",
 	"author": "Louis Brunner",
 	"dependencies": {
 		"@actions/core": "^3.0.1",
@@ -7,8 +8,11 @@
 	},
 	"description": "GitHub Action which wraps calls to GitHub Checks API",
 	"devDependencies": {
-		"@biomejs/biome": "2.4.16",
-		"@types/node": "^25.9.1",
+		"@biomejs/biome": "2.5.2",
+		"@octokit/core": "^7.0.6",
+		"@octokit/openapi-types": "^27.0.0",
+		"@octokit/plugin-rest-endpoint-methods": "^17.0.0",
+		"@types/node": "^26.1.0",
 		"typescript": "^6.0.3"
 	},
 	"funding": {
@@ -23,6 +27,9 @@
 	"license": "MIT",
 	"main": "lib/main.js",
 	"name": "checks-action",
+	"overrides": {
+		"undici": "^6.27.0"
+	},
 	"private": true,
 	"repository": {
 		"type": "git",
@@ -31,7 +38,7 @@
 	"scripts": {
 		"all": "bun run vet && bun run build && bun run pack && bun run test",
 		"build": "tsc",
-		"format:fix": "bunx @biomejs/biome format --write .",
+		"format:fix": "bunx @biomejs/biome check --write .",
 		"pack": "bun build src/main.ts --outfile dist/index.js --target node --production",
 		"test": "bun test",
 		"typecheck": "tsc --noEmit",

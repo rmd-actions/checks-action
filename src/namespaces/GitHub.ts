@@ -1,7 +1,8 @@
+/** biome-ignore-all lint/style/useFilenamingConvention: GitHub is a proper noun */
 import type { operations } from "@octokit/openapi-types";
 import type { RestEndpointMethodTypes } from "@octokit/plugin-rest-endpoint-methods";
 
-export { OctokitOptions } from "@octokit/core";
+export type { OctokitOptions } from "@octokit/core";
 
 export type PullRequest =
 	RestEndpointMethodTypes["pulls"]["get"]["response"]["data"];

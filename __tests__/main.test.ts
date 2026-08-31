@@ -1,10 +1,14 @@
-import * as cp from "node:child_process";
-import * as fs from "node:fs";
-import * as http from "node:http";
-import * as os from "node:os";
-import * as path from "node:path";
+/** biome-ignore-all lint/style/useNamingConvention: GH & env names */
+// biome-ignore lint/correctness/noUnresolvedImports: bun:test is a Bun built-in Biome doesn't resolve
+import { describe, expect, test } from "bun:test";
+import { type ExecSyncOptions, spawn } from "node:child_process";
+import { mkdtempSync, rmdirSync, unlinkSync, writeFileSync } from "node:fs";
+import { createServer, type IncomingHttpHeaders } from "node:http";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { env } from "node:process";
 
-export enum Conclusion {
+enum Conclusion {
 	Success = "success",
 	Failure = "failure",
 	Neutral = "neutral",
@@ -14,7 +18,7 @@ export enum Conclusion {
 	Skipped = "skipped",
 }
 
-export enum Status {
+enum Status {
 	Queued = "queued",
 	InProgress = "in_progress",
 	Completed = "completed",
@@ -26,12 +30,12 @@ type ErrorWithStdout = Error & { stdout: Buffer | string };
 const actualSpawnSync = async (
 	command: string,
 	args: string[],
-	options: cp.ExecSyncOptions,
-): Promise<string> => {
-	return new Promise<string>((resolve, reject) => {
+	options: ExecSyncOptions,
+): Promise<string> =>
+	new Promise<string>((resolve, reject) => {
 		let replied = false;
 
-		const node = cp.spawn(command, args, options);
+		const node = spawn(command, args, options);
 
 		if (node.stdout === null) {
 			reject(new Error("stdout is null"));
@@ -62,13 +66,14 @@ const actualSpawnSync = async (
 				err = new Error(`Action failed with code: ${code}`) as ErrorWithStdout;
 			}
 
-			if (err !== undefined) {
-				if (stdout !== "") {
-					err.stdout = stdout;
-				}
-				reject(err);
-				replied = true;
+			if (err === undefined) {
+				return;
 			}
+			if (stdout !== "") {
+				err.stdout = stdout;
+			}
+			reject(err);
+			replied = true;
 		});
 
 		node.stdout.on("data", (data) => {
@@ -84,28 +89,27 @@ const actualSpawnSync = async (
 			replied = true;
 		});
 	});
-};
 
 describe("run action", () => {
 	const mockEventFile = async (
 		event: Record<string, unknown>,
 		scope: (filename: string) => Promise<void>,
 	): Promise<void> => {
-		const directory = fs.mkdtempSync(path.join(os.tmpdir(), "checks-actions-"));
-		const filename = path.join(directory, "github_event.json");
-		fs.writeFileSync(filename, JSON.stringify(event));
+		const directory = mkdtempSync(join(tmpdir(), "checks-actions-"));
+		const filename = join(directory, "github_event.json");
+		writeFileSync(filename, JSON.stringify(event));
 		try {
 			await scope(filename);
 		} finally {
-			fs.unlinkSync(filename);
-			fs.rmdirSync(directory);
+			unlinkSync(filename);
+			rmdirSync(directory);
 		}
 	};
 
 	type RequestHandler = (
 		method: string | undefined,
 		url: string | undefined,
-		headers: http.IncomingHttpHeaders,
+		headers: IncomingHttpHeaders,
 		body: Record<string, unknown> | undefined,
 	) => {
 		status: number;
@@ -117,12 +121,13 @@ describe("run action", () => {
 		handler: RequestHandler,
 		scope: (port: string) => Promise<void>,
 	): Promise<void> => {
-		const server = http.createServer((req, res) => {
+		const server = createServer((req, res) => {
 			let body = "";
 			req.on("data", (chunk) => {
 				body += chunk;
 			});
 			req.on("end", () => {
+				// biome-ignore lint/suspicious/noConsole: local test server debug logging
 				console.debug("request", req.method, req.url, req.headers, body);
 				const { status, headers, reply } = handler(
 					req.method,
@@ -140,10 +145,11 @@ describe("run action", () => {
 			});
 		});
 
+		const serverStartTimeoutMs = 1000;
 		const portPromise = new Promise<string>((resolve, reject) => {
 			const handle = setTimeout(() => {
 				reject(new Error("Timeout while starting mock HTTP server"));
-			}, 1000);
+			}, serverStartTimeoutMs);
 
 			server.listen(0, "localhost", () => {
 				clearTimeout(handle);
@@ -192,6 +198,48 @@ describe("run action", () => {
 		return { checkID, error, output };
 	};
 
+	const buildOptionalEnv = ({
+		githubAPIURL,
+		repo,
+		sha,
+		name,
+		id,
+		eventName,
+		eventPath,
+	}: {
+		githubAPIURL: string | undefined;
+		repo: string | undefined;
+		sha: string | undefined;
+		name: string | undefined;
+		id: string | undefined;
+		eventName: string | undefined;
+		eventPath: string | undefined;
+	}): Record<string, unknown> => {
+		const optional: Record<string, unknown> = {};
+		if (githubAPIURL !== undefined) {
+			optional.INPUT_GITHUB_API_URL = githubAPIURL;
+		}
+		if (repo !== undefined) {
+			optional.INPUT_REPO = repo;
+		}
+		if (sha !== undefined) {
+			optional.INPUT_SHA = sha;
+		}
+		if (name !== undefined) {
+			optional.INPUT_NAME = name;
+		}
+		if (id !== undefined) {
+			optional.INPUT_CHECK_ID = id;
+		}
+		if (eventName !== undefined) {
+			optional.GITHUB_EVENT_NAME = eventName;
+		}
+		if (eventPath !== undefined) {
+			optional.GITHUB_EVENT_PATH = eventPath;
+		}
+		return optional;
+	};
+
 	const runAction = async ({
 		githubAPIURL,
 		repo,
@@ -221,37 +269,24 @@ describe("run action", () => {
 		checkID: number | undefined;
 		output: string;
 	}> => {
-		const entry = path.join(__dirname, "..", "dist", "index.js");
-		const optional: Record<string, unknown> = {};
-		if (githubAPIURL !== undefined) {
-			optional.INPUT_GITHUB_API_URL = githubAPIURL;
-		}
-		if (repo !== undefined) {
-			optional.INPUT_REPO = repo;
-		}
-		if (sha !== undefined) {
-			optional.INPUT_SHA = sha;
-		}
-		if (name !== undefined) {
-			optional.INPUT_NAME = name;
-		}
-		if (id !== undefined) {
-			optional.INPUT_CHECK_ID = id;
-		}
-		if (eventName !== undefined) {
-			optional.GITHUB_EVENT_NAME = eventName;
-		}
-		if (eventPath !== undefined) {
-			optional.GITHUB_EVENT_PATH = eventPath;
-		}
-		const options: cp.ExecSyncOptions = {
+		const entry = join(import.meta.dirname, "..", "dist", "index.js");
+		const optional = buildOptionalEnv({
+			eventName,
+			eventPath,
+			githubAPIURL,
+			id,
+			name,
+			repo,
+			sha,
+		});
+		const options: ExecSyncOptions = {
 			env: {
+				...env,
 				GITHUB_REPOSITORY: "LB/ABC",
 				GITHUB_SHA: "SHA1",
 				INPUT_CONCLUSION: conclusion,
 				INPUT_STATUS: status,
 				INPUT_TOKEN: token,
-				PATH: process.env.PATH,
 				...optional,
 				GITHUB_OUTPUT: "",
 				INTERNAL_TESTING_MODE_HTTP_LOCAL_PORT: testPort,
@@ -268,35 +303,36 @@ describe("run action", () => {
 			}
 			try {
 				return parseOutput(error.stdout.toString());
-			} catch {
+			} catch (parseError) {
 				throw new Error(
 					`Action failed with error: ${error.message} and output: ${error.stdout.toString()}`,
+					{ cause: parseError },
 				);
 			}
 		}
 	};
 
 	type LoggedRequest = {
+		body?: Record<string, unknown>;
 		method: string | undefined;
 		url: string | undefined;
-		body?: Record<string, unknown>;
 	};
 
 	type Case = {
-		name: string;
-		checkName?: string;
 		checkID?: string;
+		checkName?: string;
+		conclusion: Conclusion;
 		eventName?: string;
 		eventRecord?: Record<string, unknown>;
+		expectedCheckID?: number;
+		expectedError?: string;
+		expectedRequests?: LoggedRequest[];
 		githubAPIURL?: string;
+		name: string;
 		repo?: string;
 		sha?: string;
-		token?: string;
 		status: Status;
-		conclusion: Conclusion;
-		expectedError?: string;
-		expectedRequests?: Array<LoggedRequest>;
-		expectedCheckID?: number;
+		token?: string;
 	};
 
 	const cases = ((): Case[] => {
@@ -451,13 +487,13 @@ describe("run action", () => {
 		expectedCheckID,
 		...rest
 	}: Case) => {
-		const requests: Array<LoggedRequest> = [];
+		const requests: LoggedRequest[] = [];
 
 		await mockHTTPServer(
 			(reqMethod, reqURL, _reqHeaders, reqBody) => {
 				if (reqBody !== undefined) {
-					delete reqBody.completed_at;
-					delete reqBody.started_at;
+					reqBody.completed_at = undefined;
+					reqBody.started_at = undefined;
 				}
 				requests.push({ body: reqBody, method: reqMethod, url: reqURL });
 				let reply = {};
@@ -492,10 +528,10 @@ describe("run action", () => {
 
 					expect(error).toBe(expectedError);
 					expect(checkID).toBe(expectedCheckID);
-					if (expectedRequests !== undefined) {
-						expect(requests).toEqual(expectedRequests);
-					} else {
+					if (expectedRequests === undefined) {
 						expect(requests).toEqual([]);
+					} else {
+						expect(requests).toEqual(expectedRequests);
 					}
 				});
 			},

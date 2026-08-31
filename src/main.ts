@@ -1,16 +1,14 @@
-import * as core from "@actions/core";
-import * as github from "@actions/github";
-import { createRun, updateRun } from "./checks";
-import { parseInputs } from "./inputs";
-import { localFetcher, useLocalFetcher } from "./mocks";
-import type * as GitHub from "./namespaces/GitHub";
-import type * as Inputs from "./namespaces/Inputs";
+import { debug, getInput, setFailed, setOutput } from "@actions/core";
+import { context, getOctokit } from "@actions/github";
+import { createRun, updateRun } from "./checks.ts";
+import { parseInputs } from "./inputs.ts";
+import { localFetcher, useLocalFetcher } from "./mocks.ts";
+import type * as GitHub from "./namespaces/GitHub.ts";
+import type * as Inputs from "./namespaces/inputs.ts";
 
-const isCreation = (inputs: Inputs.Args): inputs is Inputs.ArgsCreate => {
-	return !!(inputs as Inputs.ArgsCreate).name;
-};
+const isCreation = (inputs: Inputs.Args): inputs is Inputs.ArgsCreate =>
+	Boolean((inputs as Inputs.ArgsCreate).name);
 
-// prettier-ignore
 const prEvents = [
 	"pull_request",
 	"pull_request_review",
@@ -27,9 +25,9 @@ const options: GitHub.OctokitOptions = useLocalFetcher
 	: {};
 
 const getSHA = (inputSHA: string | undefined): string => {
-	let sha = github.context.sha;
-	if (prEvents.includes(github.context.eventName)) {
-		const pull = github.context.payload.pull_request as GitHub.PullRequest;
+	let sha = context.sha;
+	if (prEvents.includes(context.eventName)) {
+		const pull = context.payload.pull_request as GitHub.PullRequest | undefined;
 		if (pull?.head.sha) {
 			sha = pull?.head.sha;
 		}
@@ -40,48 +38,48 @@ const getSHA = (inputSHA: string | undefined): string => {
 	return sha;
 };
 
-async function run(): Promise<void> {
+const run = async (): Promise<void> => {
 	try {
-		core.debug(`Parsing inputs`);
-		const inputs = parseInputs(core.getInput);
+		debug("Parsing inputs");
+		const inputs = parseInputs(getInput);
 
-		core.debug(`Setting up OctoKit`);
-		const octokit = github.getOctokit(inputs.token, {
+		debug("Setting up OctoKit");
+		const octokit = getOctokit(inputs.token, {
 			...options,
 			baseUrl: inputs.githubAPIURL ?? options.baseUrl,
 		});
 
 		const ownership = {
-			owner: github.context.repo.owner,
-			repo: github.context.repo.repo,
+			owner: context.repo.owner,
+			repo: context.repo.repo,
 		};
 		const sha = getSHA(inputs.sha);
 
 		if (inputs.repo) {
-			const repo = inputs.repo.split("/");
-			ownership.owner = repo[0];
-			ownership.repo = repo[1];
+			const [owner, repoName] = inputs.repo.split("/") as [string, string];
+			ownership.owner = owner;
+			ownership.repo = repoName;
 		}
 
 		if (isCreation(inputs)) {
-			core.debug(
+			debug(
 				`Creating a new Run on ${ownership.owner}/${ownership.repo}@${sha}`,
 			);
 			const id = await createRun(octokit, inputs.name, sha, ownership, inputs);
-			core.setOutput("check_id", id);
+			setOutput("check_id", id);
 		} else {
 			const id = inputs.checkID;
-			core.debug(
+			debug(
 				`Updating a Run on ${ownership.owner}/${ownership.repo}@${sha} (${id})`,
 			);
 			await updateRun(octokit, id, ownership, inputs);
 		}
-		core.debug(`Done`);
+		debug("Done");
 	} catch (e) {
 		const error = e as Error;
-		core.debug(error.toString());
-		core.setFailed(error.message);
+		debug(error.toString());
+		setFailed(error.message);
 	}
-}
+};
 
-void run();
+run();

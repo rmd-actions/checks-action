@@ -1,3 +1,5 @@
+import { env } from "node:process";
+
 const replaceURL = (url: URL, port: string): URL => {
 	url.host = "localhost";
 	url.port = port;
@@ -5,7 +7,8 @@ const replaceURL = (url: URL, port: string): URL => {
 	return url;
 };
 
-const localPort = process.env.INTERNAL_TESTING_MODE_HTTP_LOCAL_PORT;
+// biome-ignore lint/complexity/useLiteralKeys: bracket access required by noPropertyAccessFromIndexSignature
+const localPort = env["INTERNAL_TESTING_MODE_HTTP_LOCAL_PORT"];
 
 export const useLocalFetcher = localPort !== undefined;
 
@@ -17,18 +20,21 @@ export const localFetcher = (
 		throw new Error("INTERNAL_TESTING_MODE_HTTP_LOCAL_PORT is not defined");
 	}
 
+	// biome-ignore lint/suspicious/noConsole: local testing mode debug logging
 	console.debug("localFetcher::before", input);
+	let request: RequestInfo | URL;
 	if (typeof input === "string") {
-		input = replaceURL(new URL(input), localPort).toString();
+		request = replaceURL(new URL(input), localPort).toString();
 	} else if (input instanceof URL) {
-		input = replaceURL(input, localPort);
+		request = replaceURL(input, localPort);
 	} else {
-		input = {
+		request = {
 			...input,
 			url: replaceURL(new URL(input.url), localPort).toString(),
 		};
 	}
-	console.debug("localFetcher::after", input);
+	// biome-ignore lint/suspicious/noConsole: local testing mode debug logging
+	console.debug("localFetcher::after", request);
 
-	return fetch(input, init);
+	return fetch(request, init);
 };

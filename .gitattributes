@@ -1,0 +1,2 @@
+bun.lock linguist-generated text -diff
+dist/index.js -diff

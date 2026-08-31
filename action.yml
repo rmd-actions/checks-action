@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-action.json
 name: 'GitHub Checks'
 description: 'Wrapper around the GitHub Checks API'
 author: 'Louis Brunner'
@@ -34,7 +35,7 @@ inputs:
     description: 'the url to call back to when using `action_required` as conclusion or with `actions`'
     required: false
   details_url:
-    description: 'a URL with more details about your check, will be overriden by `action_url` depending on context'
+    description: 'a URL with more details about your check, will be overridden by `action_url` depending on context'
     required: false
   output:
     description: 'the output of your check'
