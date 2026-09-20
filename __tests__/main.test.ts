@@ -282,6 +282,8 @@ describe("run action", () => {
 		const options: ExecSyncOptions = {
 			env: {
 				...env,
+				GITHUB_EVENT_NAME: "",
+				GITHUB_EVENT_PATH: "",
 				GITHUB_REPOSITORY: "LB/ABC",
 				GITHUB_SHA: "SHA1",
 				INPUT_CONCLUSION: conclusion,
@@ -481,7 +483,7 @@ describe("run action", () => {
 		];
 	})();
 
-	test.each(cases)("with $name", async ({
+	const runCase = async ({
 		expectedError,
 		expectedRequests,
 		expectedCheckID,
@@ -536,5 +538,7 @@ describe("run action", () => {
 				});
 			},
 		);
-	});
+	};
+
+	test.each(cases)("with $name", runCase);
 });
